@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "graphology": "^0.25.1",
+    "graphology": "0.25.1",
     "sigma": "latest"
   },
   "devDependencies": {
@@ -17,6 +17,6 @@
     "typescript": "5.0.4",
     "webpack": "5.84.1",
     "webpack-cli": "5.1.1",
-    "kotatsu": "^0.22.3"
+    "kotatsu": "0.22.3"
   }
 }
