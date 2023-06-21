@@ -316,4 +316,4 @@ export function visualize(data: JSON, sigmaContainer: string) {
   });
 }
 
-visualize(myPersonalData, "sigma-container");
+export default visualize;
