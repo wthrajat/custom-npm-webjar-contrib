@@ -19,14 +19,14 @@
  */
 
 import { DirectedGraph } from "graphology";
+
 import Sigma from "sigma";
-import Coordinates from "sigma";
-import EdgeDisplayData from "sigma";
-import NodeDisplayData from "sigma";
+import { Coordinates, EdgeDisplayData, NodeDisplayData } from "sigma/types";
 import forceAtlas2 from "graphology-layout-forceatlas2";
+
 import FA2Layout from "graphology-layout-forceatlas2/worker";
 
-export function visualize(data: JSON, sigmaContainer: string) {
+export function visualize(data: any, sigmaContainer: string) {
   const graph = new DirectedGraph();
   graph.import(data);
 
