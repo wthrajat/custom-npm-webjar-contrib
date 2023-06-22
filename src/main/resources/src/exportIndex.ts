@@ -18,68 +18,50 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-import { DirectedGraph } from "graphology";
-
+import DirectedGraph from "graphology";
 import Sigma from "sigma";
 import { Coordinates, EdgeDisplayData, NodeDisplayData } from "sigma/types";
 import forceAtlas2 from "graphology-layout-forceatlas2";
-
 import FA2Layout from "graphology-layout-forceatlas2/worker";
 
 export function visualize(data: any, sigmaContainer: string) {
   const graph = new DirectedGraph();
   graph.import(data);
 
-  // -----------------------------------------------------------------
-  // INIT GRAPH ATTRIBUTES
+  // Initialise x and y coordinates; nodes and edges size
+
   let i = 0;
   graph.forEachNode((node) => {
     graph.setNodeAttribute(node, "x", i++);
     graph.setNodeAttribute(node, "y", i);
     i++;
   });
-  // Init node size
-  let j = 0;
   graph.forEachNode((node) => {
-    graph.setNodeAttribute(node, "size", 10);
-    j++;
+    graph.setNodeAttribute(node, "size", 4);
   });
-
-  let k = 0;
   graph.forEachEdge((edge) => {
-    graph.setEdgeAttribute(edge, "size", 3);
-    k++;
+    graph.setEdgeAttribute(edge, "size", 1);
   });
 
-  // -----------------------------------------------------------------
-
-  // DOM ELEMENTS
-  const container = document.getElementById(sigmaContainer) as HTMLElement;
-  const searchInput = document.getElementById(
-    "search-input"
-  ) as HTMLInputElement;
-  const searchSuggestions = document.getElementById(
-    "suggestions"
-  ) as HTMLDataListElement;
+  // Declare DOM Elements
+  const container = document.getElementById(sigmaContainer);
+  const searchInput = document.getElementById("search-input") as HTMLInputElement;
+  const searchSuggestions = document.getElementById("suggestions") as HTMLDataListElement;
   const zoomInBtn = document.getElementById("zoom-in") as HTMLButtonElement;
   const zoomOutBtn = document.getElementById("zoom-out") as HTMLButtonElement;
-  const zoomResetBtn = document.getElementById(
-    "zoom-reset"
-  ) as HTMLButtonElement;
-  const labelsThresholdRange = document.getElementById(
-    "labels-threshold"
-  ) as HTMLInputElement;
+  const zoomResetBtn = document.getElementById("zoom-reset") as HTMLButtonElement;
+  const labelsThresholdRange = document.getElementById("labels-threshold") as HTMLInputElement;
 
-  // 2 Options for Settings
-  const sensibleSettings = forceAtlas2.inferSettings(graph);
-
+  // We have 2 options for settings but ofcourse we can only choose 1 at a time:
   const customSettings = {
     gravity: 1,
     adjustSizes: true,
     barnesHutOptimize: true
   };
+  
+  const sensibleSettings = forceAtlas2.inferSettings(graph);
   const fa2Layout = new FA2Layout(graph, {
-    settings: customSettings
+    settings: sensibleSettings
   });
 
   function stopFA2() {
@@ -93,8 +75,14 @@ export function visualize(data: any, sigmaContainer: string) {
 
   const renderer = new Sigma(graph, container);
 
-  // -----------------------------------------------------
-  // SEARCH FUNCTION
+  // Event handler for click to open page URL when a node is clicked
+  renderer.on("clickNode", ({ node }) => {
+    if (!graph.getNodeAttribute(node, "hidden")) {
+      window.open(graph.getNodeAttribute(node, "pageURL"), "_blank");
+    }
+  });
+
+  // Search by nodes feature
   // Type and declare internal state:
   interface State {
     hoveredNode?: string;
@@ -110,15 +98,18 @@ export function visualize(data: any, sigmaContainer: string) {
   const state: State = { searchQuery: "" };
 
   // Feed the datalist autocomplete values:
-  searchSuggestions.innerHTML = graph
-    .nodes()
-    .map(
-      (node) =>
-        `<option value="${graph.getNodeAttribute(node, "label")}"></option>`
-    )
-    .join("\n");
+  graph.forEachNode((node) => {
+    const optionElement = document.createElement("option");
+    const label = graph.getNodeAttribute(node, "label");
+    optionElement.value = label;
+    searchSuggestions.appendChild(optionElement);
+  });
 
-  // Actions:
+  // Make a new Set to store all lowercase labels and then perform the check
+  const lowercaseLabels = new Set<string>(
+    graph.nodes().map((n) => graph.getNodeAttribute(n, "label").toLowerCase())
+  );
+
   function setSearchQuery(query: string) {
     state.searchQuery = query;
 
@@ -128,15 +119,17 @@ export function visualize(data: any, sigmaContainer: string) {
       const lcQuery = query.toLowerCase();
       const suggestions = graph
         .nodes()
+        .filter((n) =>
+          lowercaseLabels.has(graph.getNodeAttribute(n, "label").toLowerCase())
+        )
         .map((n) => ({
           id: n,
           label: graph.getNodeAttribute(n, "label") as string
         }))
         .filter(({ label }) => label.toLowerCase().includes(lcQuery));
 
-      // If we have a single perfect match, them we remove the suggestions, and
-      // we consider the user has selected a node through the datalist
-      // autocomplete:
+      /* If we have a single perfect match, then we remove the suggestions, and
+         we consider the user has selected a node through the datalist autocomplete: */
       if (suggestions.length === 1 && suggestions[0].label === query) {
         state.selectedNode = suggestions[0].id;
         state.suggestions = undefined;
@@ -193,10 +186,11 @@ export function visualize(data: any, sigmaContainer: string) {
     setHoveredNode(undefined);
   });
 
-  // Render nodes accordingly to the internal state:
-  // 1. If a node is selected, it is highlighted
-  // 2. If there is query, all non-matching nodes are greyed
-  // 3. If there is a hovered node, all non-neighbor nodes are greyed
+  /* Render nodes accordingly to the internal state:
+     1. If a node is selected, it is highlighted
+     2. If there is query, all non-matching nodes are greyed
+     3. If there is a hovered node, all non-neighbor nodes are greyed */
+
   renderer.setSetting("nodeReducer", (node, data) => {
     const res: Partial<NodeDisplayData> = { ...data };
 
@@ -219,11 +213,10 @@ export function visualize(data: any, sigmaContainer: string) {
     return res;
   });
 
-  // Render edges accordingly to the internal state:
-  // 1. If a node is hovered, the edge is hidden if it is not connected to the
-  //    node
-  // 2. If there is a query, the edge is only visible if it connects two
-  //    suggestions
+  /* Render edges accordingly to the internal state:
+   1. If a node is hovered, the edge is hidden if it is not connected to the node
+   2. If there is a query, the edge is only visible if it connects two suggestions */
+
   renderer.setSetting("edgeReducer", (edge, data) => {
     const res: Partial<EdgeDisplayData> = { ...data };
 
@@ -241,8 +234,6 @@ export function visualize(data: any, sigmaContainer: string) {
 
     return res;
   });
-
-  // ---------------------------------------------------------
 
   // Interactive Buttons
   const camera = renderer.getCamera();
@@ -269,23 +260,24 @@ export function visualize(data: any, sigmaContainer: string) {
   // Set proper range initial value:
   labelsThresholdRange.value =
     renderer.getSetting("labelRenderedSizeThreshold") + "";
-  // ---------- DRAGGABLE NODES ----------------
 
+  // Draggable nodes feature
   let draggedNode: string | null = null;
   let isDragging = false;
 
-  // On mouse down on a node
-  //  - we enable the drag mode
-  //  - save in the dragged node in the state
-  //  - highlight the node
-  //  - disable the camera so its state is not updated
+  /* On mouse down on a node
+    - we enable the drag mode
+    - save in the dragged node in the state
+    - highlight the node
+    - disable the camera so its state is not updated */
+
   renderer.on("downNode", (e) => {
     isDragging = true;
     draggedNode = e.node;
     graph.setNodeAttribute(draggedNode, "highlighted", true);
   });
 
-  // On mouse move, if the drag mode is enabled, we change the position of the draggedNode
+    // On mouse move, if the drag mode is enabled, we change the position of the draggedNode
   renderer.getMouseCaptor().on("mousemovebody", (e) => {
     if (!isDragging || !draggedNode) return;
 
@@ -301,7 +293,7 @@ export function visualize(data: any, sigmaContainer: string) {
     e.original.stopPropagation();
   });
 
-  // On mouse up, we reset the autoscale and the dragging mode
+    // On mouse up, we reset the autoscaling and the dragging mode
   renderer.getMouseCaptor().on("mouseup", () => {
     if (draggedNode) {
       graph.removeNodeAttribute(draggedNode, "highlighted");
