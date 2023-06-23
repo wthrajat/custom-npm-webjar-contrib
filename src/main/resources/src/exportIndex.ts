@@ -52,13 +52,13 @@ export function visualize(data: any, sigmaContainer: string) {
   const zoomResetBtn = document.getElementById("zoom-reset") as HTMLButtonElement;
   const labelsThresholdRange = document.getElementById("labels-threshold") as HTMLInputElement;
 
-  // We have 2 options for settings but ofcourse we can only choose 1 at a time:
+  /* We have 2 options for settings but ofcourse we can only choose 1 at a time:
   const customSettings = {
     gravity: 1,
     adjustSizes: true,
     barnesHutOptimize: true
   };
-  
+  */
   const sensibleSettings = forceAtlas2.inferSettings(graph);
   const fa2Layout = new FA2Layout(graph, {
     settings: sensibleSettings
@@ -73,7 +73,21 @@ export function visualize(data: any, sigmaContainer: string) {
   }
   startFA2();
 
-  const renderer = new Sigma(graph, container);
+  const rendererSettings = {
+    labelDensity: 1,
+    labelGridCellSize: 100,
+    labelRenderedSizeThreshold: 1,
+    defaultEdgeType: "arrow",
+    defaultNodeType: "circle",
+    labelSize: 13,
+    labelWeight: "normal",
+    labelColor: { color: "black" },
+    zIndex: true,
+    minCameraRatio: 0.1,
+    maxCameraRatio: 10
+  };
+
+  const renderer = new Sigma(graph, container, rendererSettings);
 
   // Event handler for click to open page URL when a node is clicked
   renderer.on("clickNode", ({ node }) => {

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "exec": "node dist/bundle.js",
+    "exec": "node dist/visualisationAPI.js",
     "build": "npx webpack --mode=production"
   },
   "author": "",
