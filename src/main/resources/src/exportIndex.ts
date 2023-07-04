@@ -40,7 +40,7 @@ export function visualize(data: any, sigmaContainer: string) {
     graph.setNodeAttribute(node, "size", 4);
   });
   graph.forEachEdge((edge) => {
-    graph.setEdgeAttribute(edge, "size", 1);
+    graph.setEdgeAttribute(edge, "size", 3);
   });
 
   // Declare DOM Elements
@@ -74,12 +74,11 @@ export function visualize(data: any, sigmaContainer: string) {
   startFA2();
 
   const rendererSettings = {
-    labelDensity: 1,
     labelGridCellSize: 100,
     labelRenderedSizeThreshold: 1,
     defaultEdgeType: "arrow",
     defaultNodeType: "circle",
-    labelSize: 13,
+    labelSize: 14,
     labelWeight: "normal",
     labelColor: { color: "black" },
     zIndex: true
@@ -90,7 +89,7 @@ export function visualize(data: any, sigmaContainer: string) {
   // Event handler for click to open page URL when a node is clicked
   renderer.on("clickNode", ({ node }) => {
     if (!graph.getNodeAttribute(node, "hidden")) {
-      window.open(graph.getNodeAttribute(node, "pageURL"), "_blank");
+      window.open(graph.getNodeAttribute(node, "pageURL"), "_self");
     }
   });
 
