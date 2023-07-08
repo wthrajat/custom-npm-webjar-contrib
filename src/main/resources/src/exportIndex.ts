@@ -92,13 +92,6 @@ export function visualize(data: any, sigmaContainer: string) {
   // Search by nodes feature
   // Type and declare internal state:
   function handleSearch(graph: DirectedGraph, renderer: Sigma) {
-    // Check if search elements are present
-    const searchInput = document.getElementById(
-      "search-input"
-    ) as HTMLInputElement;
-    const searchSuggestions = document.getElementById(
-      "suggestions"
-    ) as HTMLDataListElement;
 
     if (!searchInput || !searchSuggestions) {
       return; // Skip search feature if elements are not present
