@@ -48,6 +48,9 @@ export function visualize(data: any, sigmaContainer: string) {
   const searchInput = document.getElementById("search-input") as HTMLInputElement;
   const searchSuggestions = document.getElementById("suggestions") as HTMLDataListElement;
 
+  // Colors
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color');
+
   /* We have 2 options for settings but ofcourse we can only choose 1 at a time:
   const customSettings = {
     gravity: 1,
