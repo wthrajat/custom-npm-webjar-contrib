@@ -79,10 +79,10 @@ export function visualize(data: any, sigmaContainer: string, themeColors: ThemeC
     context.fillStyle = themeColors.labelContainerColor;
     context.shadowOffsetX = 0;
     context.shadowOffsetY = 0;
-    context.shadowBlur = 8;
-    context.shadowColor = "#000";
+    context.shadowBlur = 10;
+    context.shadowColor = themeColors.labelColor;
   
-    const PADDING = 2;
+    const PADDING = 3;
   
     if (typeof data.label === "string") {
       const textWidth = context.measureText(data.label).width,
