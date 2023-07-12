@@ -1,30 +1,78 @@
-/*
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership.
- *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
- */
-
 import DirectedGraph from "graphology";
 import Sigma from "sigma";
-import { Coordinates, EdgeDisplayData, NodeDisplayData } from "sigma/types";
+import {
+  Coordinates,
+  EdgeDisplayData,
+  NodeDisplayData,
+  PartialButFor
+} from "sigma/types";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 import FA2Layout from "graphology-layout-forceatlas2/worker";
+import { Settings } from "sigma/settings";
+import drawLabel from "sigma/rendering/canvas/label";
 
-export function visualize(data: any, sigmaContainer: string) {
+interface ThemeColors {
+  labelColor: string,
+  fadeColor: string,
+  labelContainerColor: string
+}
+
+export function customDrawHover(
+  context: CanvasRenderingContext2D,
+  data: PartialButFor<NodeDisplayData, "x" | "y" | "size" | "label" | "color">,
+  settings: Settings,
+  themeColors: ThemeColors
+): void {
+  const size = settings.labelSize,
+    font = settings.labelFont,
+    weight = settings.labelWeight;
+
+  context.font = `${weight} ${size}px ${font}`;
+
+  // Then we draw the label background
+  context.fillStyle = themeColors.labelContainerColor;
+  context.shadowOffsetX = 0;
+  context.shadowOffsetY = 0;
+  context.shadowBlur = 8;
+  context.shadowColor = "#000";
+
+  const PADDING = 2;
+
+  if (typeof data.label === "string") {
+    const textWidth = context.measureText(data.label).width,
+      boxWidth = Math.round(textWidth + 5),
+      boxHeight = Math.round(size + 2 * PADDING),
+      radius = Math.max(data.size, size / 2) + PADDING;
+
+    const angleRadian = Math.asin(boxHeight / 2 / radius);
+    const xDeltaCoord = Math.sqrt(
+      Math.abs(Math.pow(radius, 2) - Math.pow(boxHeight / 2, 2))
+    );
+
+    context.beginPath();
+    context.moveTo(data.x + xDeltaCoord, data.y + boxHeight / 2);
+    context.lineTo(data.x + radius + boxWidth, data.y + boxHeight / 2);
+    context.lineTo(data.x + radius + boxWidth, data.y - boxHeight / 2);
+    context.lineTo(data.x + xDeltaCoord, data.y - boxHeight / 2);
+    context.arc(data.x, data.y, radius, angleRadian, -angleRadian);
+    context.closePath();
+    context.fill();
+  } else {
+    context.beginPath();
+    context.arc(data.x, data.y, data.size + PADDING, 0, Math.PI * 2);
+    context.closePath();
+    context.fill();
+  }
+
+  context.shadowOffsetX = 0;
+  context.shadowOffsetY = 0;
+  context.shadowBlur = 0;
+
+  // And finally we draw the label
+  drawLabel(context, data, settings, themeColors);
+}
+
+export function visualize(data: any, sigmaContainer: string, themeColors: ThemeColors) {
   const graph = new DirectedGraph();
   graph.import(data);
 
@@ -40,16 +88,13 @@ export function visualize(data: any, sigmaContainer: string) {
     graph.setNodeAttribute(node, "size", 4);
   });
   graph.forEachEdge((edge) => {
-    graph.setEdgeAttribute(edge, "size", 3);
+    graph.setEdgeAttribute(edge, "size", 2);
   });
 
   // Declare DOM Elements
   const container = document.getElementById(sigmaContainer);
   const searchInput = document.getElementById("search-input") as HTMLInputElement;
   const searchSuggestions = document.getElementById("suggestions") as HTMLDataListElement;
-
-  // Colors
-  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color');
 
   /* We have 2 options for settings but ofcourse we can only choose 1 at a time:
   const customSettings = {
@@ -68,7 +113,7 @@ export function visualize(data: any, sigmaContainer: string) {
   }
   function startFA2() {
     fa2Layout.start();
-    setTimeout(stopFA2, 5000); // Stop the layout after 5 seconds
+    setTimeout(stopFA2, 8000); // Stop the layout after 8 seconds
   }
   startFA2();
 
@@ -79,8 +124,9 @@ export function visualize(data: any, sigmaContainer: string) {
     defaultNodeType: "circle",
     labelSize: 14,
     labelWeight: "normal",
-    labelColor: { color: "black" },
-    zIndex: true
+    labelColor: { color: themeColors.labelColor },
+    zIndex: true,
+    hoverRenderer: customDrawHover
   };
 
   const renderer = new Sigma(graph, container, rendererSettings);
@@ -220,14 +266,14 @@ export function visualize(data: any, sigmaContainer: string) {
         state.hoveredNode !== node
       ) {
         res.label = "";
-        res.color = "#f6f6f6";
+        res.color = themeColors.fadeColor;
       }
 
       if (state.selectedNode === node) {
         res.highlighted = true;
       } else if (state.suggestions && !state.suggestions.has(node)) {
         res.label = "";
-        res.color = "#f6f6f6";
+        res.color = themeColors.labelColor;
       }
 
       return res;
