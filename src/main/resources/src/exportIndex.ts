@@ -58,9 +58,7 @@ export function visualize(data: DirectedGraph, sigmaContainer: string, themeColo
    graph.setEdgeAttribute(edge, "size", (isPanel ? 2 : 1));
  });
 
-
  class customEdgeArrowHeadProgram extends EdgeArrowHeadProgram {
-  // Override the process method to modify data.size
   process(
     offset: number,
     sourceData: NodeDisplayData,
@@ -278,9 +276,11 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
     // Bind graph interactions:
     renderer.on("enterNode", ({ node }) => {
       setHoveredNode(node);
+      container.style.cursor = "pointer";
     });
     renderer.on("leaveNode", () => {
       setHoveredNode(undefined);
+      container.style.cursor = "default";
     });
 
     /* Render nodes accordingly to the internal state:
@@ -333,7 +333,6 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
     });
   }
   handleSearch(graph, renderer);
-
 
   // Nodes click and drag events
     renderer.on("clickNode", ({ node }) => {
