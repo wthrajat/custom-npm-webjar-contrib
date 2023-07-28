@@ -40,7 +40,7 @@ interface ThemeColors {
   labelContainerColor: string
 }
 
-export function visualize(data: any, sigmaContainer: string, themeColors: ThemeColors) {
+export function visualize(data: DirectedGraph, sigmaContainer: string, themeColors: ThemeColors, isPanel = false) {
   const graph = new DirectedGraph();
   graph.import(data);
 
@@ -52,11 +52,10 @@ export function visualize(data: any, sigmaContainer: string, themeColors: ThemeC
    i++;
  });
  graph.forEachNode((node) => {
-   graph.setNodeAttribute(node, "size", 4);
+   graph.setNodeAttribute(node, "size", (isPanel ? 8 : 5));
  });
  graph.forEachEdge((edge) => {
-   graph.setEdgeAttribute(edge, "size", 1);
-   graph.setEdgeAttribute(edge, "color", "pink");
+   graph.setEdgeAttribute(edge, "size", (isPanel ? 2 : 1));
  });
 
 
@@ -68,7 +67,7 @@ export function visualize(data: any, sigmaContainer: string, themeColors: ThemeC
     targetData: NodeDisplayData,
     data: EdgeDisplayData,
   ) {
-    data.size *= 4 || 1;
+    data.size *= (isPanel ? 4 : 3) || 1;
     super.process(offset, sourceData, targetData, data);
   }
 }
@@ -100,7 +99,7 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
   }
   function startFA2() {
     fa2Layout.start();
-    setTimeout(stopFA2, 8000); // Stop the layout after 8 seconds
+    setTimeout(stopFA2, (isPanel ? 2000 : 8000));
   }
   startFA2();
 
@@ -159,14 +158,11 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
   }
 
   const rendererSettings = {
-    labelGridCellSize: 100,
-    labelRenderedSizeThreshold: 1,
+    labelRenderedSizeThreshold: (isPanel ? 0.7 : 1),
     defaultEdgeType: "arrow",
-    defaultNodeType: "circle",
-    labelSize: 14,
+    labelSize: (isPanel ? 13 : 14),
     labelWeight: "normal",
     labelColor: { color: themeColors.labelColor },
-    labelFont: "Ubuntu",
     zIndex: true,
     hoverRenderer: customDrawHover,
     edgeProgramClasses: { arrow: EdgeArrowProgram }

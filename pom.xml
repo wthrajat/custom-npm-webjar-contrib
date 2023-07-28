@@ -28,7 +28,7 @@
     <version>14.10.10</version>
   </parent>
   <packaging>webjar</packaging>
-  <artifactId>webpack-demo-v20-color</artifactId>
+  <artifactId>webpack-demo-v28</artifactId>
   <developers>
     <developer>
       <id>mleduc</id>
