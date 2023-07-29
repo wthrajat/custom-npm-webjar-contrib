@@ -112,7 +112,7 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
   ): void {
     const size = settings.labelSize + 2,
       font = settings.labelFont,
-      weight = settings.labelWeight;
+      weight = "bold";
   
     context.font = `${weight} ${size}px ${font}`;
   
@@ -120,7 +120,7 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
     context.fillStyle = themeColors.labelContainerColor;
     context.shadowOffsetX = 0;
     context.shadowOffsetY = 0;
-    context.shadowBlur = 8;
+    context.shadowBlur = 6;
     context.shadowColor = themeColors.labelColor;
   
     const PADDING = 3;
@@ -175,8 +175,8 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
   // Nice visual optimisations
   renderer.on("enterNode", ({ node }) => {
     container.style.cursor = "pointer";
-    graph.setNodeAttribute(node, "size", nodeSize + (isPanel ? 3 : 2));
-    graph.setNodeAttribute(node, "color", themeColors.labelColor);
+    graph.setNodeAttribute(node, "size", nodeSize + (isPanel ? 5 : 4));
+    graph.setNodeAttribute(node, "color", "orange");
   });
   renderer.on("leaveNode", ({ node }) => {
     container.style.cursor = "default";
