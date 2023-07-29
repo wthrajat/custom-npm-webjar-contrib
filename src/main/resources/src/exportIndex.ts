@@ -38,11 +38,14 @@ interface ThemeColors {
   labelColor: string,
   fadeColor: string,
   labelContainerColor: string
+  nodeColor: string
 }
 
 export function visualize(data: DirectedGraph, sigmaContainer: string, themeColors: ThemeColors, isPanel = false) {
   const graph = new DirectedGraph();
   graph.import(data);
+
+  let nodeSize : number = null;
 
  // Initialise x and y coordinates; nodes and edges size
  let i = 0;
@@ -53,6 +56,7 @@ export function visualize(data: DirectedGraph, sigmaContainer: string, themeColo
  });
  graph.forEachNode((node) => {
    graph.setNodeAttribute(node, "size", (isPanel ? 8 : 5));
+   nodeSize = graph.getNodeAttribute(node, "size");
  });
  graph.forEachEdge((edge) => {
    graph.setEdgeAttribute(edge, "size", (isPanel ? 2 : 1));
@@ -106,7 +110,7 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
     data: PartialButFor<NodeDisplayData, "x" | "y" | "size" | "label" | "color">,
     settings: Settings
   ): void {
-    const size = settings.labelSize,
+    const size = settings.labelSize + 2,
       font = settings.labelFont,
       weight = settings.labelWeight;
   
@@ -168,12 +172,16 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
 
   const renderer = new Sigma(graph, container, rendererSettings);
 
-  // Change the cursor to pointer when hovering over a node
+  // Nice visual optimisations
   renderer.on("enterNode", ({ node }) => {
     container.style.cursor = "pointer";
+    graph.setNodeAttribute(node, "size", nodeSize + (isPanel ? 3 : 2));
+    graph.setNodeAttribute(node, "color", themeColors.labelColor);
   });
   renderer.on("leaveNode", ({ node }) => {
     container.style.cursor = "default";
+    graph.setNodeAttribute(node, "size", nodeSize);
+    graph.setNodeAttribute(node, "color", themeColors.nodeColor);
   });
 
   // Search by nodes feature
@@ -340,13 +348,6 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
   }
   handleSearch(graph, renderer);
 
-  // Nodes click and drag events
-    renderer.on("clickNode", ({ node }) => {
-      if (!graph.getNodeAttribute(node, "hidden")) {
-        window.open(graph.getNodeAttribute(node, "pageURL"), "_self");
-      }
-    });
-
   let draggedNode: string | null = null;
   let isDragging = false;
 
@@ -390,6 +391,13 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
   // Disable the autoscale at the first down interaction
   renderer.getMouseCaptor().on("mousedown", () => {
     if (!renderer.getCustomBBox()) renderer.setCustomBBox(renderer.getBBox());
+  });
+
+  // Nodes click and drag events
+   renderer.on("clickNode", ({ node }) => {
+    if (!graph.getNodeAttribute(node, "hidden")) {
+      window.open(graph.getNodeAttribute(node, "pageURL"), "_self");
+    }
   });
 }
 
