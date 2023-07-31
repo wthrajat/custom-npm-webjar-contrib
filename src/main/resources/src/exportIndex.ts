@@ -41,10 +41,9 @@ interface ThemeColors {
   nodeColor: string
 }
 
-export function visualize(data: DirectedGraph, sigmaContainer: string, themeColors: ThemeColors, isPanel = false, nb : number = null) {
+export function visualize(data: DirectedGraph, sigmaContainer: string, themeColors: ThemeColors, isPanel : boolean = false, nb : number = null) {
   const graph = new DirectedGraph();
   graph.import(data);
-
   let nodeSize : number = null;
 
  // Initialise x and y coordinates; nodes and edges size
@@ -348,6 +347,7 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
   }
   handleSearch(graph, renderer);
 
+  // Nodes drag & click events
   let draggedNode: string | null = null;
   let isDragging = false;
 
@@ -363,7 +363,7 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
     graph.setNodeAttribute(draggedNode, "highlighted", true);
   });
 
-    // On mouse move, if the drag mode is enabled, we change the position of the draggedNode
+  // On mouse move, if the drag mode is enabled, we change the position of the draggedNode
   renderer.getMouseCaptor().on("mousemovebody", (e) => {
     if (!isDragging || !draggedNode) return;
 
@@ -379,23 +379,38 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
     e.original.stopPropagation();
   });
 
-    // On mouse up, we reset the autoscaling and the dragging mode
-  renderer.getMouseCaptor().on("mouseup", () => {
-    if (draggedNode) {
-      graph.removeNodeAttribute(draggedNode, "highlighted");
-    }
-    isDragging = false;
-    draggedNode = null;
-  });
+  /* Delta is the distance in pixels that we must move horizontally or vertically between the up and down events 
+  for the code to classify it as a drag rather than a click. This is because sometimes we will move the mouse or
+  our finger a few pixels before lifting it.
+  :) Read more here: https://stackoverflow.com/a/59741870/9691448
+  */
+  const delta : number = 10;  
+  let startX : number;
+  let startY : number;
+  let allowClick : Boolean = true;
 
   // Disable the autoscale at the first down interaction
-  renderer.getMouseCaptor().on("mousedown", () => {
+  renderer.getMouseCaptor().on("mousedown", (event) => {
+    startX = event.original.pageX;
+    startY = event.original.pageY;
     if (!renderer.getCustomBBox()) renderer.setCustomBBox(renderer.getBBox());
   });
 
-  // Nodes click and drag events
-   renderer.on("clickNode", ({ node }) => {
-    if (!graph.getNodeAttribute(node, "hidden")) {
+  // On mouse up, we reset the autoscaling and the dragging mode
+  renderer.getMouseCaptor().on("mouseup", (event) => {
+    if (draggedNode) {
+      graph.removeNodeAttribute(draggedNode, "highlighted");
+      const diffX : number = Math.abs(event.original.pageX - startX);
+      const diffY : number = Math.abs(event.original.pageY - startY);
+      allowClick  = diffX < delta && diffY < delta;
+      isDragging = false;
+      draggedNode = null;
+    }
+  });
+
+  // On click, we open the corresponding page URL
+  renderer.on("clickNode", ({ node }) => {
+    if (!graph.getNodeAttribute(node, "hidden") && allowClick) {
       window.open(graph.getNodeAttribute(node, "pageURL"), "_self");
     }
   });
