@@ -47,14 +47,13 @@ export function visualize(data: DirectedGraph, sigmaContainer: string, themeColo
   let nodeSize : number = null;
 
  // Initialise x and y coordinates; nodes and edges size
- let i = 0;
+ let i : number = 0;
  graph.forEachNode((node) => {
    graph.setNodeAttribute(node, "x", i++);
    graph.setNodeAttribute(node, "y", i);
    i++;
  });
  graph.forEachNode((node) => {
-   graph.setNodeAttribute(node, "size", (isPanel ? 8 : 5));
    nodeSize = graph.getNodeAttribute(node, "size");
  });
  graph.forEachEdge((edge) => {
@@ -68,7 +67,7 @@ export function visualize(data: DirectedGraph, sigmaContainer: string, themeColo
     targetData: NodeDisplayData,
     data: EdgeDisplayData,
   ) {
-    data.size *= (isPanel ? 4 : 3) || 1;
+    data.size *= (isPanel ? 4.5 : 4) || 1;
     super.process(offset, sourceData, targetData, data);
   }
 }
@@ -79,7 +78,7 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
 ]);
 
   // Declare DOM Elements
-  const container = document.getElementById(sigmaContainer);
+  const container : HTMLElement = document.getElementById(sigmaContainer);
   const searchInput = document.getElementById("search-input") as HTMLInputElement;
   const searchSuggestions = document.getElementById("suggestions") as HTMLDataListElement;
 
@@ -161,7 +160,7 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
   const rendererSettings = {
     labelRenderedSizeThreshold: (isPanel ? 0.7 : 1),
     defaultEdgeType: "arrow",
-    labelSize: (isPanel ? 13 : 14),
+    labelSize: (isPanel ? 14 : 15),
     labelWeight: "normal",
     labelColor: { color: themeColors.labelColor },
     zIndex: true,
@@ -175,12 +174,12 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
   renderer.on("enterNode", ({ node }) => {
     container.style.cursor = "pointer";
     graph.setNodeAttribute(node, "size", nodeSize + (isPanel ? 5 : 4));
-    graph.setNodeAttribute(node, "color", "orange");
+  //  graph.setNodeAttribute(node, "color", "orange");
   });
   renderer.on("leaveNode", ({ node }) => {
     container.style.cursor = "default";
     graph.setNodeAttribute(node, "size", nodeSize);
-    graph.setNodeAttribute(node, "color", themeColors.nodeColor);
+  //  graph.setNodeAttribute(node, "color", themeColors.nodeColor);
   });
 
   // Search by nodes feature
@@ -190,7 +189,6 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
       return; // Skip search feature if elements are not present
     }
 
-    // Search by nodes feature
     // Type and declare internal state:
     interface State {
       hoveredNode?: string;
@@ -387,7 +385,7 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
   const delta : number = 10;  
   let startX : number;
   let startY : number;
-  let allowClick : Boolean = true;
+  let allowClick : boolean = true;
 
   // Disable the autoscale at the first down interaction
   renderer.getMouseCaptor().on("mousedown", (event) => {
