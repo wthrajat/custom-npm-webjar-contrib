@@ -44,21 +44,17 @@ interface ThemeColors {
 export function visualize(data: DirectedGraph, sigmaContainer: string, themeColors: ThemeColors, isPanel : boolean = false, nb : number = null) {
   const graph = new DirectedGraph();
   graph.import(data);
-  let nodeSize : number = null;
 
- // Initialise x and y coordinates; nodes and edges size
+ // Initialise x and y coordinates & edge size
  let i : number = 0;
  graph.forEachNode((node) => {
    graph.setNodeAttribute(node, "x", i++);
    graph.setNodeAttribute(node, "y", i);
    i++;
  });
- graph.forEachNode((node) => {
-   nodeSize = graph.getNodeAttribute(node, "size");
- });
  graph.forEachEdge((edge) => {
-   graph.setEdgeAttribute(edge, "size", (isPanel ? 2 : 1));
- });
+  graph.setEdgeAttribute(edge, "size", (isPanel ? 2 : 1));
+});
 
  class customEdgeArrowHeadProgram extends EdgeArrowHeadProgram {
   process(
@@ -67,12 +63,12 @@ export function visualize(data: DirectedGraph, sigmaContainer: string, themeColo
     targetData: NodeDisplayData,
     data: EdgeDisplayData,
   ) {
-    data.size *= (isPanel ? 4.5 : 4) || 1;
+    data.size *= (isPanel ? 3.5 : 4) || 1;
     super.process(offset, sourceData, targetData, data);
   }
 }
 
-const EdgeArrowProgram = createEdgeCompoundProgram([
+ const EdgeArrowProgram = createEdgeCompoundProgram([
   EdgeClampedProgram,
   customEdgeArrowHeadProgram
 ]);
@@ -83,10 +79,12 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
   const searchSuggestions = document.getElementById("suggestions") as HTMLDataListElement;
 
   /* We have 2 options for settings but ofcourse we can only choose 1 at a time:
-  const customSettings = {
-    gravity: 1,
+    const customSettings = {
+    gravity: 0.01,
     adjustSizes: true,
-    barnesHutOptimize: true
+    barnesHutOptimize: true,
+    scalingRatio: 10,
+    slowDown: 10
   };
   */
   const sensibleSettings = forceAtlas2.inferSettings(graph);
@@ -171,16 +169,30 @@ const EdgeArrowProgram = createEdgeCompoundProgram([
   const renderer = new Sigma(graph, container, rendererSettings);
 
   // Nice visual optimisations
-  renderer.on("enterNode", ({ node }) => {
+  renderer.on("enterNode", () => {
     container.style.cursor = "pointer";
-    graph.setNodeAttribute(node, "size", nodeSize + (isPanel ? 5 : 4));
-  //  graph.setNodeAttribute(node, "color", "orange");
+  });
+  renderer.on("leaveNode", () => {
+    container.style.cursor = "default";
+  });
+
+  if(isPanel) {
+  renderer.on("enterNode", ({ node }) => {
+    graph.updateNodeAttribute(node, "size", n => n + 4);
   });
   renderer.on("leaveNode", ({ node }) => {
-    container.style.cursor = "default";
-    graph.setNodeAttribute(node, "size", nodeSize);
-  //  graph.setNodeAttribute(node, "color", themeColors.nodeColor);
+    graph.updateNodeAttribute(node, "size", n => n - 4);
   });
+} else {
+  renderer.on("enterNode", ({ node }) => {
+    graph.updateNodeAttribute(node, "size", n => n + 3);
+    graph.updateNodeAttribute(node, "color", n => "orange");
+  });
+  renderer.on("leaveNode", ({ node }) => {
+    graph.updateNodeAttribute(node, "size", n => n - 3);
+    graph.updateNodeAttribute(node, "color", n => themeColors.nodeColor);
+  });
+}
 
   // Search by nodes feature
   function handleSearch(graph: DirectedGraph, renderer: Sigma) {
