@@ -166,7 +166,8 @@ export function visualize(data: DirectedGraph, sigmaContainer: string, themeColo
     labelColor: { color: themeColors.labelColor },
     zIndex: true,
     hoverRenderer: customDrawHover,
-    edgeProgramClasses: { arrow: EdgeArrowProgram }
+    edgeProgramClasses: { arrow: EdgeArrowProgram },
+    allowInvalidContainer: true
   };
 
   const renderer = new Sigma(graph, container, rendererSettings);
@@ -198,9 +199,9 @@ export function visualize(data: DirectedGraph, sigmaContainer: string, themeColo
 }
 
   // Search by nodes feature
-  function handleSearch(graph: DirectedGraph, renderer: Sigma) {
+  function handleSearch(graph: DirectedGraph, renderer: Sigma, isPanel : boolean) {
 
-    if (!searchInput || !searchSuggestions) {
+    if (isPanel) {
       return; // Skip search feature if elements are not present
     }
 
@@ -358,7 +359,7 @@ export function visualize(data: DirectedGraph, sigmaContainer: string, themeColo
       return res;
     });
   }
-  handleSearch(graph, renderer);
+  handleSearch(graph, renderer, isPanel);
 
   // Nodes drag & click events
   let draggedNode: string | null = null;
@@ -439,6 +440,13 @@ export function visualize(data: DirectedGraph, sigmaContainer: string, themeColo
     camera.animatedReset({ duration: 600 });
   });
 }
+ function killSigmaInstance() : void {
+  renderer.kill();
+ }
+ 
+ return {
+  killSigmaInstance
+};
 }
 
 export default visualize;
